@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Validación de credencial</title>
+  <style>
+    body {
+      font-family: -apple-system, Arial, sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .estado {
+      font-size: 22px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .validado { background: #d4edda; color: #155724; }
+    .suspendido { background: #f8d7da; color: #721c24; }
+    .error { background: #fff3cd; color: #856404; }
+    .dato { text-align: left; margin: 10px 0; font-size: 16px; }
+    .dato b { color: #555; }
+    .loading { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <p class="loading">Verificando credencial...</p>
+  </div>
+
+  <script>
+    // ⚠️ Reemplazá estos dos valores con los tuyos de Supabase
+    const SUPABASE_FUNCTION_URL = 'https://uzyeweuoydilgybmffus.supabase.co/functions/v1/validar';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6eWV3ZXVveWRpbGd5Ym1mZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODYzMjYsImV4cCI6MjEwNTc2MjMyNn0.dVxWZae0qxGpdLx0Zdkl52bWR-rGx9sNrjXk2LQ1-mU';
+
+    async function verificar() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      const card = document.getElementById('card');
+
+      if (!token) {
+        card.innerHTML = '<div class="estado error">⚠️ QR inválido</div><p>No se encontró un token en el enlace.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${SUPABASE_FUNCTION_URL}?token=${encodeURIComponent(token)}`, {
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          card.innerHTML = '<div class="estado error">⚠️ Credencial no encontrada</div>';
+          return;
+        }
+
+        const esValido = data.estado === 'activo';
+        const claseEstado = esValido ? 'validado' : 'suspendido';
+        const textoEstado = esValido ? '✅ Identidad validada' : '⛔ Credencial suspendida';
+
+        card.innerHTML = `
+          <div class="estado ${claseEstado}">${textoEstado}</div>
+          <div class="dato"><b>Nombre:</b> ${data.nombre}</div>
+          <div class="dato"><b>DNI:</b> ${data.dni}</div>
+          <div class="dato"><b>Institución:</b> ${data.institucion}</div>
+        `;
+      } catch (err) {
+        card.innerHTML = '<div class="estado error">⚠️ Error de conexión</div><p>Intentá de nuevo en unos segundos.</p>';
+      }
+    }
+
+    verificar();
+  </script>
+</body>
+</html>
