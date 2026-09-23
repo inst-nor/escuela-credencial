@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel de administración - Instituto Norland</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --azul-marino: #0a1128;
+      --azul-marino-2: #16213e;
+      --rojo: #c1121f;
+      --rojo-suave: #e5383b;
+      --verde: #4ade80;
+      --texto-claro: #f5f5f5;
+      --texto-atenuado: #a9b4c2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+      background: var(--azul-marino);
+      color: var(--texto-claro);
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .contenedor { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; text-align: center; margin-bottom: 4px; }
+    .subtitulo { text-align: center; color: var(--texto-atenuado); font-size: 13px; margin-bottom: 28px; }
+
+    .panel {
+      background: var(--azul-marino-2);
+      border-radius: 14px;
+      padding: 26px;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: var(--texto-claro);
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+    input::placeholder { color: var(--texto-atenuado); }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-principal {
+      width: 100%;
+      background: linear-gradient(90deg, var(--rojo), var(--rojo-suave));
+      color: white;
+    }
+
+    .btn-secundario {
+      background: transparent;
+      border: 1px solid var(--texto-atenuado);
+      color: var(--texto-atenuado);
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
+    .error-msg {
+      color: var(--rojo-suave);
+      font-size: 13px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    #panel-login { display: block; }
+    #panel-app { display: none; }
+
+    .barra-superior {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .fila-alumno {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 10px;
+    }
+    .fila-alumno:last-child { border-bottom: none; }
+
+    .info-alumno { flex: 1; min-width: 0; }
+    .info-alumno .nombre { font-weight: 600; font-size: 15px; }
+    .info-alumno .detalle { font-size: 12px; color: var(--texto-atenuado); }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+      margin-right: 8px;
+    }
+    .badge-activo { background: rgba(74,222,128,0.15); color: var(--verde); }
+    .badge-suspendido { background: rgba(229,56,59,0.15); color: var(--rojo-suave); }
+
+    .btn-toggle {
+      font-size: 12px;
+      padding: 8px 12px;
+      white-space: nowrap;
+    }
+    .btn-suspender { background: rgba(229,56,59,0.2); color: var(--rojo-suave); }
+    .btn-activar { background: rgba(74,222,128,0.2); color: var(--verde); }
+
+    .vacio { text-align: center; color: var(--texto-atenuado); font-size: 14px; padding: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <h1>Panel de administración</h1>
+    <p class="subtitulo">Instituto Norland — Credenciales de alumnos</p>
+
+    <!-- LOGIN -->
+    <div class="panel" id="panel-login">
+      <p class="error-msg" id="error-login"></p>
+      <input type="email" id="input-email" placeholder="Email institucional">
+      <input type="password" id="input-password" placeholder="Contraseña">
+      <button class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
+    </div>
+
+    <!-- APP (post-login) -->
+    <div id="panel-app">
+      <div class="barra-superior">
+        <span class="subtitulo" style="margin:0" id="email-actual"></span>
+        <button class="btn-secundario" onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
+
+      <div class="panel">
+        <input type="text" id="input-busqueda" placeholder="Buscar por nombre o DNI..." oninput="buscar()">
+        <div id="resultados"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ Completá con tus datos reales de Supabase (la anon key, NO la service_role)
+    const SUPABASE_URL = 'https://uzyeweuoydilgybmffus.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6eWV3ZXVveWRpbGd5Ym1mZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODYzMjYsImV4cCI6MjEwNTc2MjMyNn0.dVxWZae0qxGpdLx0Zdkl52bWR-rGx9sNrjXk2LQ1-mU';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function verificarSesion() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        mostrarApp(session.user.email);
+      }
+    }
+
+    async function iniciarSesion() {
+      const email = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value;
+      const errorMsg = document.getElementById('error-login');
+      errorMsg.style.display = 'none';
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        errorMsg.textContent = 'Email o contraseña incorrectos.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      mostrarApp(data.user.email);
+    }
+
+    async function cerrarSesion() {
+      await supabase.auth.signOut();
+      document.getElementById('panel-login').style.display = 'block';
+      document.getElementById('panel-app').style.display = 'none';
+      document.getElementById('input-password').value = '';
+    }
+
+    function mostrarApp(email) {
+      document.getElementById('panel-login').style.display = 'none';
+      document.getElementById('panel-app').style.display = 'block';
+      document.getElementById('email-actual').textContent = email;
+    }
+
+    let timeoutBusqueda = null;
+    function buscar() {
+      clearTimeout(timeoutBusqueda);
+      timeoutBusqueda = setTimeout(ejecutarBusqueda, 300);
+    }
+
+    async function ejecutarBusqueda() {
+      const termino = document.getElementById('input-busqueda').value.trim();
+      const contenedor = document.getElementById('resultados');
+
+      if (!termino) {
+        contenedor.innerHTML = '';
+        return;
+      }
+
+      const { data, error } = await supabase.rpc('buscar_alumnos', { termino });
+
+      if (error) {
+        contenedor.innerHTML = `<p class="vacio">Error al buscar: ${error.message}</p>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        contenedor.innerHTML = '<p class="vacio">No se encontraron alumnos.</p>';
+        return;
+      }
+
+      contenedor.innerHTML = data.map(alumno => {
+        const activo = alumno.estado === 'activo';
+        return `
+          <div class="fila-alumno">
+            <div class="info-alumno">
+              <div class="nombre">${alumno.nombre_completo}</div>
+              <div class="detalle">DNI ${alumno.dni} · ${alumno.institucion}</div>
+            </div>
+            <span class="badge ${activo ? 'badge-activo' : 'badge-suspendido'}">${activo ? 'Activo' : 'Suspendido'}</span>
+            <button class="btn-toggle ${activo ? 'btn-suspender' : 'btn-activar'}"
+                    onclick="cambiarEstado(${alumno.id}, '${activo ? 'suspendido' : 'activo'}')">
+              ${activo ? 'Suspender' : 'Reactivar'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function cambiarEstado(id, nuevoEstado) {
+      const { error } = await supabase.rpc('cambiar_estado', { p_id: id, p_nuevo_estado: nuevoEstado });
+      if (error) {
+        alert('No se pudo actualizar: ' + error.message);
+        return;
+      }
+      ejecutarBusqueda(); // refresca la lista
+    }
+
+    verificarSesion();
+  </script>
+</body>
+</html>
