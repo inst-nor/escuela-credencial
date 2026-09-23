@@ -6,50 +6,191 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Validación de credencial</title>
   <style>
+    :root {
+      --azul-marino: #0a1128;
+      --azul-marino-2: #16213e;
+      --rojo: #c1121f;
+      --rojo-suave: #e5383b;
+      --texto-claro: #f5f5f5;
+      --texto-atenuado: #a9b4c2;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, Arial, sans-serif;
-      background: #f2f2f2;
+      font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+      background: var(--azul-marino);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       margin: 0;
       padding: 20px;
-      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Formas abstractas de fondo */
+    body::before {
+      content: "";
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: 320px;
+      height: 320px;
+      background: var(--rojo);
+      opacity: 0.15;
+      border-radius: 50%;
+      filter: blur(10px);
+    }
+
+    body::after {
+      content: "";
+      position: absolute;
+      bottom: -150px;
+      left: -100px;
+      width: 280px;
+      height: 280px;
+      background: var(--rojo-suave);
+      opacity: 0.12;
+      transform: rotate(20deg);
+      border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%;
+      filter: blur(6px);
+    }
+
+    .linea-abstracta {
+      position: absolute;
+      width: 2px;
+      background: linear-gradient(180deg, transparent, var(--rojo) 40%, transparent);
+      opacity: 0.4;
+    }
+    .linea-1 { height: 240px; top: 0; left: 15%; transform: rotate(12deg); }
+    .linea-2 { height: 180px; bottom: 0; right: 12%; transform: rotate(-10deg); }
+
     .card {
-      background: white;
-      border-radius: 16px;
-      padding: 30px;
+      background: var(--azul-marino-2);
+      border-radius: 18px;
+      padding: 34px 30px;
       max-width: 380px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      position: relative;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,0.06);
     }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--rojo), var(--rojo-suave));
+      border-radius: 18px 18px 0 0;
+    }
+
     .estado {
-      font-size: 22px;
-      font-weight: bold;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      font-size: 21px;
+      font-weight: 700;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+      letter-spacing: 0.3px;
     }
-    .validado { background: #d4edda; color: #155724; }
-    .suspendido { background: #f8d7da; color: #721c24; }
-    .error { background: #fff3cd; color: #856404; }
-    .dato { text-align: left; margin: 10px 0; font-size: 16px; }
-    .dato b { color: #555; }
-    .loading { color: #888; }
+
+    .validado {
+      background: rgba(46, 196, 143, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .suspendido {
+      background: rgba(193, 18, 31, 0.15);
+      color: var(--rojo-suave);
+      border: 1px solid rgba(229, 56, 59, 0.4);
+    }
+
+    .error {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .dato {
+      text-align: left;
+      margin: 12px 0;
+      font-size: 16px;
+      color: var(--texto-claro);
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dato:last-child { border-bottom: none; }
+    .dato b { color: var(--texto-atenuado); font-weight: 600; margin-right: 6px; }
+
+    .loading { color: var(--texto-atenuado); font-size: 15px; }
+
+    .footer-nota {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--texto-atenuado);
+      opacity: 0.7;
+    }
+
+    .encabezado {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 26px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .encabezado img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 12px;
+    }
+
+    .encabezado h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--texto-claro);
+      margin: 0;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .encabezado .linea-acento {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--rojo), var(--rojo-suave));
+      border-radius: 2px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
+  <div class="linea-abstracta linea-1"></div>
+  <div class="linea-abstracta linea-2"></div>
+
+  <div class="encabezado">
+    <!-- Reemplazá "logo.png" por el nombre de tu archivo de logo, subido junto a este index.html -->
+    <img src="logo.png" alt="Logo Instituto Norland" onerror="this.style.display='none'">
+    <h1>Instituto Norland</h1>
+    <div class="linea-acento"></div>
+  </div>
+
   <div class="card" id="card">
     <p class="loading">Verificando credencial...</p>
   </div>
 
   <script>
-    // ⚠️ Reemplazá estos dos valores con los tuyos de Supabase
     const SUPABASE_FUNCTION_URL = 'https://uzyeweuoydilgybmffus.supabase.co/functions/v1/validar';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6eWV3ZXVveWRpbGd5Ym1mZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODYzMjYsImV4cCI6MjEwNTc2MjMyNn0.dVxWZae0qxGpdLx0Zdkl52bWR-rGx9sNrjXk2LQ1-mU';
+    const SUPABASE_ANON_KEY = 'TU_ANON_KEY_ACA';
 
     async function verificar() {
       const params = new URLSearchParams(window.location.search);
@@ -57,7 +198,7 @@
       const card = document.getElementById('card');
 
       if (!token) {
-        card.innerHTML = '<div class="estado error">⚠️ QR inválido</div><p>No se encontró un token en el enlace.</p>';
+        card.innerHTML = '<div class="estado error">⚠️ QR inválido</div><p class="loading">No se encontró un token en el enlace.</p>';
         return;
       }
 
@@ -83,9 +224,10 @@
           <div class="dato"><b>Nombre:</b> ${data.nombre}</div>
           <div class="dato"><b>DNI:</b> ${data.dni}</div>
           <div class="dato"><b>Institución:</b> ${data.institucion}</div>
+          <div class="footer-nota">Verificación institucional</div>
         `;
       } catch (err) {
-        card.innerHTML = '<div class="estado error">⚠️ Error de conexión</div><p>Intentá de nuevo en unos segundos.</p>';
+        card.innerHTML = '<div class="estado error">⚠️ Error de conexión</div><p class="loading">Intentá de nuevo en unos segundos.</p>';
       }
     }
 
