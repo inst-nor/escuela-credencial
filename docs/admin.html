@@ -157,10 +157,10 @@
     const SUPABASE_URL = 'https://uzyeweuoydilgybmffus.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6eWV3ZXVveWRpbGd5Ym1mZnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODYzMjYsImV4cCI6MjEwNTc2MjMyNn0.dVxWZae0qxGpdLx0Zdkl52bWR-rGx9sNrjXk2LQ1-mU';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function verificarSesion() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await sb.auth.getSession();
       if (session) {
         mostrarApp(session.user.email);
       }
@@ -172,7 +172,7 @@
       const errorMsg = document.getElementById('error-login');
       errorMsg.style.display = 'none';
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
       if (error) {
         errorMsg.textContent = 'Email o contraseña incorrectos.';
@@ -184,7 +184,7 @@
     }
 
     async function cerrarSesion() {
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       document.getElementById('panel-login').style.display = 'block';
       document.getElementById('panel-app').style.display = 'none';
       document.getElementById('input-password').value = '';
@@ -211,7 +211,7 @@
         return;
       }
 
-      const { data, error } = await supabase.rpc('buscar_alumnos', { termino });
+      const { data, error } = await sb.rpc('buscar_alumnos', { termino });
 
       if (error) {
         contenedor.innerHTML = `<p class="vacio">Error al buscar: ${error.message}</p>`;
@@ -242,7 +242,7 @@
     }
 
     async function cambiarEstado(id, nuevoEstado) {
-      const { error } = await supabase.rpc('cambiar_estado', { p_id: id, p_nuevo_estado: nuevoEstado });
+      const { error } = await sb.rpc('cambiar_estado', { p_id: id, p_nuevo_estado: nuevoEstado });
       if (error) {
         alert('No se pudo actualizar: ' + error.message);
         return;
